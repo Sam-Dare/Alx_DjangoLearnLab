@@ -1,11 +1,12 @@
-# Delete Operation
+# Delete Command
 
 ```python
-# Delete the book instance
-book.delete()
-# Output: (1, {'bookshelf.Book': 1})
+from bookshelf.models import Book
 
-# Verify the deletion by attempting to retrieve all books
-Book.objects.all()
-# Output: <QuerySet []>
+# Assuming the book instance was created earlier
+book = Book.objects.get(title="1984")
+book.delete()
+
+# Confirm deletion
+Book.objects.all()  # This should return an empty queryset if the book was deleted.
 ```
