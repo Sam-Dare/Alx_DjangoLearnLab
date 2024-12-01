@@ -1,8 +1,6 @@
-# from django.shortcuts import render
-# from django_filters.rest_framework import DjangoFilterBackend
-
 from rest_framework import generics, serializers, permissions, filters
 from django_filters import rest_framework
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 
 from .models import Book
 from .serializers import BookSerializer
@@ -26,7 +24,7 @@ class BookDetailView(generics.RetrieveAPIView):
 class BookCreateView(generics.CreateAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticated]  # Authenticated users only
+    permission_classes = [IsAuthenticated]  # Authenticated users only
 
     def perform_create(self, serializer):
         # Custom validation logic
@@ -34,14 +32,14 @@ class BookCreateView(generics.CreateAPIView):
             raise serializers.ValidationError("Publication year cannot be in the future.")
         serializer.save()
 
-        # UpdateView - Modify an existing book
+# UpdateView - Modify an existing book
 class BookUpdateView(generics.UpdateAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticated]  # Authenticated users only
+    permission_classes = [IsAuthenticated]  # Authenticated users only
 
     def get_object(self):
-        # Assuming book ID is passed in the request body (or you can change it to another method)
+        # Assuming book ID is passed in the request body
         book_id = self.request.data.get('id')
         return Book.objects.get(pk=book_id)
 
@@ -49,22 +47,9 @@ class BookUpdateView(generics.UpdateAPIView):
 class BookDeleteView(generics.DestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticated]  # Authenticated users only
+    permission_classes = [IsAuthenticated]  # Authenticated users only
 
     def get_object(self):
-        # Assuming book ID is passed in the request body (or you can change it to another method)
+        # Assuming book ID is passed in the request body
         book_id = self.request.data.get('id')
         return Book.objects.get(pk=book_id)
-
-
-# # UpdateView - Modify an existing book
-# class BookUpdateView(generics.UpdateAPIView):
-#     queryset = Book.objects.all()
-#     serializer_class = BookSerializer
-#     permission_classes = [permissions.IsAuthenticated]  # Authenticated users only
-
-# # DeleteView - Remove a book
-# class BookDeleteView(generics.DestroyAPIView):
-#     queryset = Book.objects.all()
-#     serializer_class = BookSerializer
-#     permission_classes = [permissions.IsAuthenticated]  # Authenticated users only
