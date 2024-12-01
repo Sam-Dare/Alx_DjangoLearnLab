@@ -1,11 +1,10 @@
-from rest_framework.generics import ListAPIView
-from rest_framework.viewsets import ModelViewSet
+from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
 from .models import Book
 from .serializers import BookSerializer
 
 # ListAPIView for listing all books
-class BookList(ListAPIView):
+class BookList(generics.ListAPIView):
     """
     A view for listing all books in the database.
     """
@@ -13,7 +12,7 @@ class BookList(ListAPIView):
     serializer_class = BookSerializer
 
 # ModelViewSet for handling CRUD operations
-class BookViewSet(ModelViewSet):
+class BookViewSet(viewsets.ModelViewSet):
     """
     A ViewSet for handling CRUD operations on the Book model.
     """
