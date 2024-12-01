@@ -1,7 +1,9 @@
-from django.shortcuts import render
+# from django.shortcuts import render
+# from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import generics, serializers, permissions, filters
-from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import rest_framework
+
 from .models import Book
 from .serializers import BookSerializer
 
@@ -9,7 +11,7 @@ from .serializers import BookSerializer
 class BookListView(generics.ListAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [rest_framework.DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['title', 'author', 'publication_year']
     search_fields = ['title', 'author']
     ordering_fields = ['title', 'publication_year']  # Fields to order by
@@ -32,14 +34,37 @@ class BookCreateView(generics.CreateAPIView):
             raise serializers.ValidationError("Publication year cannot be in the future.")
         serializer.save()
 
-# UpdateView - Modify an existing book
+        # UpdateView - Modify an existing book
 class BookUpdateView(generics.UpdateAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [permissions.IsAuthenticated]  # Authenticated users only
+
+    def get_object(self):
+        # Assuming book ID is passed in the request body (or you can change it to another method)
+        book_id = self.request.data.get('id')
+        return Book.objects.get(pk=book_id)
 
 # DeleteView - Remove a book
 class BookDeleteView(generics.DestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [permissions.IsAuthenticated]  # Authenticated users only
+
+    def get_object(self):
+        # Assuming book ID is passed in the request body (or you can change it to another method)
+        book_id = self.request.data.get('id')
+        return Book.objects.get(pk=book_id)
+
+
+# # UpdateView - Modify an existing book
+# class BookUpdateView(generics.UpdateAPIView):
+#     queryset = Book.objects.all()
+#     serializer_class = BookSerializer
+#     permission_classes = [permissions.IsAuthenticated]  # Authenticated users only
+
+# # DeleteView - Remove a book
+# class BookDeleteView(generics.DestroyAPIView):
+#     queryset = Book.objects.all()
+#     serializer_class = BookSerializer
+#     permission_classes = [permissions.IsAuthenticated]  # Authenticated users only
