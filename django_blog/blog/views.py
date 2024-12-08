@@ -169,9 +169,9 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.models import User
-from .forms import UserRegistrationForm, UserProfileForm, CommentForm
-from .models import Post, Comment
 from django.db.models import Q
+from .forms import UserRegistrationForm, UserProfileForm, CommentForm, PostForm
+from .models import Post, Comment
 
 # Custom Authentication Views
 class CustomLoginView(LoginView):
@@ -256,13 +256,12 @@ class PostDetailView(DetailView):
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
-    fields = ['title', 'content']
+    form_class = PostForm  # Use your custom form here instead of the default form
     template_name = 'blog/post_form.html'
 
     def form_valid(self, form):
-        form.instance.author = self.request.user
+        form.instance.author = self.request.user  # Assign the logged-in user as the author
         return super().form_valid(form)
-
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post

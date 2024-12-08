@@ -75,14 +75,22 @@ WSGI_APPLICATION = 'django_blog.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',  # Using PostgreSQL
+#         'NAME': 'your_db_name',                   # Replace with your database name
+#         'USER': 'your_db_user',                   # Replace with your database user
+#         'PASSWORD': 'your_db_password',           # Replace with your database password
+#         'HOST': 'localhost',                      # Database server
+#         'PORT': '5432',                           # Default PostgreSQL port
+#     }
+# }
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',  # Using PostgreSQL
-        'NAME': 'your_db_name',                   # Replace with your database name
-        'USER': 'your_db_user',                   # Replace with your database user
-        'PASSWORD': 'your_db_password',           # Replace with your database password
-        'HOST': 'localhost',                      # Database server
-        'PORT': '5432',                           # Default PostgreSQL port
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 

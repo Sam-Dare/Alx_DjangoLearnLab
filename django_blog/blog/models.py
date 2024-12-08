@@ -1,20 +1,20 @@
 from django.db import models
 from django.contrib.auth.models import User
+from taggit.managers import TaggableManager
 from django.urls import reverse
-from .models import Post
 
 class Post(models.Model):
     title = models.CharField(max_length=200)
     content = models.TextField()
     published_date = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    tags = TaggableManager()  # Adding the tag functionality
 
     class Meta:
         ordering = ['-published_date']  # Newest posts first
 
     def __str__(self):
         return self.title
-
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -29,9 +29,6 @@ class Profile(models.Model):
         if self.profile_picture:
             return self.profile_picture.url
         return '/static/images/default_profile_picture.jpg'  # Replace with your actual default path
-
-
-
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
