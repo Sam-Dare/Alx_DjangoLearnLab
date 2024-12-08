@@ -17,6 +17,39 @@ class CustomLoginView(LoginView):
 class CustomLogoutView(LogoutView):
     template_name = 'blog/logout.html'
 
+# # User Registration View
+# class UserRegistrationView:
+#     def __init__(self, request):
+#         self.request = request
+
+#     def register(self):
+#         if self.request.method == 'POST':
+#             form = UserRegistrationForm(self.request.POST)
+#             if form.is_valid():
+#                 form.save()
+#                 messages.success(self.request, 'Registration successful. Please log in.')
+#                 return redirect('login')
+#         else:
+#             form = UserRegistrationForm()
+#         return render(self.request, 'blog/register.html', {'form': form})
+
+
+# # User Profile Management View
+# class UserProfileView(LoginRequiredMixin):
+#     def __init__(self, request):
+#         self.request = request
+
+#     def profile(self):
+#         if self.request.method == 'POST':
+#             form = UserProfileForm(self.request.POST, instance=self.request.user)
+#             if form.is_valid():
+#                 form.save()
+#                 messages.success(self.request, 'Your profile has been updated.')
+#                 return redirect('profile')
+#         else:
+#             form = UserProfileForm(instance=self.request.user)
+#         return render(self.request, 'blog/profile.html', {'form': form})
+
 # User Registration
 def register(request):
     if request.method == 'POST':
@@ -28,6 +61,7 @@ def register(request):
     else:
         form = UserRegistrationForm()
     return render(request, 'blog/register.html', {'form': form})
+
 
 # User Profile Management
 @login_required
@@ -42,6 +76,7 @@ def profile(request):
         form = UserProfileForm(instance=request.user)
     return render(request, 'blog/profile.html', {'form': form})
 
+
 # Blog Post Views
 class PostListView(ListView):
     model = Post
@@ -50,9 +85,11 @@ class PostListView(ListView):
     ordering = ['-published_date']
     paginate_by = 5  # Adjust the pagination limit as required
 
+
 class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/post_detail.html'
+
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
@@ -76,6 +113,7 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         post = self.get_object()
         return self.request.user == post.author
 
+
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
     template_name = 'blog/post_confirm_delete.html'
@@ -85,25 +123,54 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         post = self.get_object()
         return self.request.user == post.author
 
+
 # Post Detail View
-@login_required
-def post_detail(request, pk):
-    post = get_object_or_404(Post, pk=pk)
-    comments = post.comments.all()
-    if request.method == 'POST' and request.user.is_authenticated:
-        form = CommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.post = post
-            comment.author = request.user
-            comment.save()
-            messages.success(request, 'Your comment has been added.')
-            return redirect('post-detail', pk=post.pk)
-    else:
-        form = CommentForm()
-    return render(request, 'blog/post_detail.html', {'post': post, 'comments': comments, 'form': form})
+class CommentCreateView:
+    def __init__(self, request, pk):
+        self.request = request
+        self.pk = pk
+
+    def post_detail(self):
+        post = get_object_or_404(Post, pk=self.pk)
+        comments = post.comments.all()
+        if self.request.method == 'POST' and self.request.user.is_authenticated:
+            form = CommentForm(self.request.POST)
+            if form.is_valid():
+                comment = form.save(commit=False)
+                comment.post = post
+                comment.author = self.request.user
+                comment.save()
+                messages.success(self.request, 'Your comment has been added.')
+                return redirect('post-detail', pk=post.pk)
+        else:
+            form = CommentForm()
+
+        return render(self.request, 'blog/post_detail.html', {'post': post, 'comments': comments, 'form': form})
+
 
 # Comment Edit View
+# class CommentEditView(LoginRequiredMixin):
+#     def __init__(self, request, pk):
+#         self.request = request
+#         self.pk = pk
+
+#     def comment_edit(self):
+#         comment = get_object_or_404(Comment, pk=self.pk)
+#         if self.request.user != comment.author:
+#             messages.error(self.request, "You can only edit your own comments.")
+#             return redirect('post-detail', pk=comment.post.pk)
+
+#         if self.request.method == 'POST':
+#             form = CommentForm(self.request.POST, instance=comment)
+#             if form.is_valid():
+#                 form.save()
+#                 messages.success(self.request, 'Your comment has been updated.')
+#                 return redirect('post-detail', pk=comment.post.pk)
+#         else:
+#             form = CommentForm(instance=comment)
+        
+#         return render(self.request, 'blog/comment_edit.html', {'form': form})
+
 class CommentUpdateView(LoginRequiredMixin, UpdateView):
     model = Comment
     form_class = CommentForm
@@ -118,22 +185,23 @@ class CommentUpdateView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, 'Your comment has been updated.')
         return redirect('post-detail', pk=comment.post.pk)
 
+
 # Comment Delete View
 class CommentDeleteView(LoginRequiredMixin):
-    def get(self, request, pk):
-        # Optionally redirect or show a confirmation page
-        messages.error(request, "Invalid request method.")
-        return redirect('post-detail', pk=get_object_or_404(Comment, pk=pk).post.pk)
+    def __init__(self, request, pk):
+        self.request = request
+        self.pk = pk
 
-    def post(self, request, pk):
-        comment = get_object_or_404(Comment, pk=pk)
+    def comment_delete(self):
+        comment = get_object_or_404(Comment, pk=self.pk)
         post_pk = comment.post.pk
-        if request.user != comment.author:
-            messages.error(request, "You can only delete your own comments.")
+        if self.request.user != comment.author:
+            messages.error(self.request, "You can only delete your own comments.")
         else:
             comment.delete()
-            messages.success(request, 'Your comment has been deleted.')
+            messages.success(self.request, 'Your comment has been deleted.')
         return redirect('post-detail', pk=post_pk)
+
 
 # Search View
 class SearchPostsView(ListView):
@@ -146,6 +214,7 @@ class SearchPostsView(ListView):
         return Post.objects.filter(
             Q(title__icontains=query) | Q(content__icontains=query) | Q(tags__name__icontains=query)
         ).distinct()
+
 
 class TaggedPostsView(ListView):
     model = Post
