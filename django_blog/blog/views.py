@@ -289,7 +289,7 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 
 # Post Detail View
-class PostDetailViewWithComments:
+class CommentCreateView:
     def __init__(self, request, pk):
         self.request = request
         self.pk = pk
@@ -313,27 +313,41 @@ class PostDetailViewWithComments:
 
 
 # Comment Edit View
-class CommentEditView(LoginRequiredMixin):
-    def __init__(self, request, pk):
-        self.request = request
-        self.pk = pk
+# class CommentEditView(LoginRequiredMixin):
+#     def __init__(self, request, pk):
+#         self.request = request
+#         self.pk = pk
 
-    def comment_edit(self):
-        comment = get_object_or_404(Comment, pk=self.pk)
-        if self.request.user != comment.author:
+#     def comment_edit(self):
+#         comment = get_object_or_404(Comment, pk=self.pk)
+#         if self.request.user != comment.author:
+#             messages.error(self.request, "You can only edit your own comments.")
+#             return redirect('post-detail', pk=comment.post.pk)
+
+#         if self.request.method == 'POST':
+#             form = CommentForm(self.request.POST, instance=comment)
+#             if form.is_valid():
+#                 form.save()
+#                 messages.success(self.request, 'Your comment has been updated.')
+#                 return redirect('post-detail', pk=comment.post.pk)
+#         else:
+#             form = CommentForm(instance=comment)
+        
+#         return render(self.request, 'blog/comment_edit.html', {'form': form})
+
+class CommentUpdateView(LoginRequiredMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = 'blog/comment_form.html'
+
+    def form_valid(self, form):
+        comment = self.get_object()
+        if comment.author != self.request.user:
             messages.error(self.request, "You can only edit your own comments.")
             return redirect('post-detail', pk=comment.post.pk)
-
-        if self.request.method == 'POST':
-            form = CommentForm(self.request.POST, instance=comment)
-            if form.is_valid():
-                form.save()
-                messages.success(self.request, 'Your comment has been updated.')
-                return redirect('post-detail', pk=comment.post.pk)
-        else:
-            form = CommentForm(instance=comment)
-        
-        return render(self.request, 'blog/comment_edit.html', {'form': form})
+        form.save()
+        messages.success(self.request, 'Your comment has been updated.')
+        return redirect('post-detail', pk=comment.post.pk)
 
 
 # Comment Delete View

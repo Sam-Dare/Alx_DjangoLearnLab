@@ -9,8 +9,8 @@ from .views import (
     PostCreateView,
     PostUpdateView,
     PostDeleteView,
-    PostDetailViewWithComments,
-    CommentEditView,
+    CommentCreateView,
+    CommentUpdateView,
     CommentDeleteView,
     SearchPostsView,
     TaggedPostsView
@@ -25,17 +25,17 @@ urlpatterns = [
 
     # Blog Post URLs
     path('', PostListView.as_view(), name='post-list'),
-    path('posts/<int:pk>/', PostDetailView.as_view(), name='post-detail'),
-    path('posts/new/', PostCreateView.as_view(), name='post-create'),
-    path('posts/<int:pk>/edit/', PostUpdateView.as_view(), name='post-update'),
-    path('posts/<int:pk>/delete/', PostDeleteView.as_view(), name='post-delete'),
+    path('post/<int:pk>/', PostDetailView.as_view(), name='post-detail'),
+    path('post/new/', PostCreateView.as_view(), name='post-create'),
+    path('post/<int:pk>/update/', PostUpdateView.as_view(), name='post-update'),
+    path('post/<int:pk>/delete/', PostDeleteView.as_view(), name='post-delete'),
 
     # Tagged Post URLs
     path('tags/<str:tag_name>/', TaggedPostsView, name='tagged-posts'),
 
     # Comment URLs
-    path('post/<int:pk>/', PostDetailViewWithComments, name='post-detail'),
-    path('comments/<int:pk>/edit/', CommentEditView, name='comment-edit'),
+     path('post/<int:pk>/comment/new/', CommentCreateView.as_view(), name='comment-create'),
+    path('comment/<int:pk>/edit/', CommentUpdateView.as_view(), name='comment-edit'),
     path('comments/<int:pk>/delete/', CommentDeleteView, name='comment-delete'),
 
     # Search URLs
