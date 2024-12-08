@@ -28,4 +28,4 @@ class PostForm(forms.ModelForm):
         fields = ['title', 'content', 'tags']  # Include the tags field
 
     # Optional: If you want to customize the widget, use TagWidget here
-    tags = forms.CharField(widget=TagWidget(attrs={'placeholder': 'Add tags, separated by commas'}))
+    tags = forms.CharField(widgets=TagWidget(attrs={'placeholder': 'Add tags, separated by commas'}))
