@@ -1,0 +1,38 @@
+{% extends 'blog/base.html' %} {% block content %}
+<h2>{{ post.title }}</h2>
+<p>{{ post.content }}</p>
+<small>Published by {{ post.author }} on {{ post.published_date }}</small>
+{% if user == post.author %}
+<a href="{% url 'post-update' post.pk %}">Edit</a>
+<a href="{% url 'post-delete' post.pk %}">Delete</a>
+{% endif %} {% endblock %}
+
+<!-- Display Post Content -->
+<h2>{{ post.title }}</h2>
+<p>{{ post.content }}</p>
+
+<!-- Display Comments -->
+{% for comment in comments %}
+<div>
+  <p><strong>{{ comment.author.username }}</strong> says:</p>
+  <p>{{ comment.content }}</p>
+  <p>Posted on: {{ comment.created_at }}</p>
+
+  {% if comment.author == request.user %}
+  <a href="{% url 'comment-edit' pk=comment.pk %}">Edit</a>
+  <a href="{% url 'comment-delete' pk=comment.pk %}">Delete</a>
+  {% endif %}
+</div>
+{% empty %}
+<p>No comments yet.</p>
+{% endfor %}
+
+<!-- Comment Form -->
+{% if user.is_authenticated %}
+<form method="POST">
+  {% csrf_token %} {{ form.as_p }}
+  <button type="submit">Add Comment</button>
+</form>
+{% else %}
+<p>You must be logged in to add a comment.</p>
+{% endif %}

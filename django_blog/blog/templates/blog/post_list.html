@@ -1,0 +1,17 @@
+{% extends 'blog/base.html' %} {% block content %}
+<h2>All Posts</h2>
+{% for post in posts %}
+<div>
+  <h3><a href="{% url 'post-detail' post.pk %}">{{ post.title }}</a></h3>
+  <p>{{ post.content|slice:":200" }}...</p>
+  <small>Published by {{ post.author }} on {{ post.published_date }}</small>
+</div>
+{% endfor %} {% if is_paginated %}
+<div>
+  {% if page_obj.has_previous %}
+  <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+  {% endif %} {% if page_obj.has_next %}
+  <a href="?page={{ page_obj.next_page_number }}">Next</a>
+  {% endif %}
+</div>
+{% endif %} {% endblock %}
