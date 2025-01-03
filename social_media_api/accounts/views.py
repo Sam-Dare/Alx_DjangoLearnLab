@@ -1,62 +1,106 @@
 from django.contrib.auth import authenticate
-from django.shortcuts import get_object_or_404
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from rest_framework import status, permissions
+from django.shortcuts import get_object_or_404
+from rest_framework import status, permissions, generics
+from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .models import CustomUser
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserRegistrationSerializer, UserLoginSerializer
+from rest_framework.permissions import IsAuthenticated
 
-# @api_view(['POST'])
-# def follow_user(request, user_id):
-#     user_to_follow = User.objects.get(id=user_id)
-#     request.user.following.add(user_to_follow)
-#     return Response({'status': 'followed'}, status=status.HTTP_200_OK)
+class FollowUserView(generics.GenericAPIView):
+    """
+    Allows authenticated users to follow other users.
+    """
+    permission_classes = [IsAuthenticated]
 
-# @api_view(['POST'])
-# def unfollow_user(request, user_id):
-#     user_to_unfollow = User.objects.get(id=user_id)
-#     request.user.following.remove(user_to_unfollow)
-#     return Response({'status': 'unfollowed'}, status=status.HTTP_200_OK)
+    def post(self, request, user_id, *args, **kwargs):
+        # Get the user to follow
+        user_to_follow = get_object_or_404(CustomUser, id=user_id)
+        
+        # Prevent following oneself
+        if user_to_follow == request.user:
+            return Response({"error": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST'])
-def follow_user(request, user_id):
-    user_to_follow = get_object_or_404(CustomUser, id=user_id)
-    if user_to_follow == request.user:
-        return Response({"error": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+        # Check if the user is already following
+        if request.user.following.filter(id=user_id).exists():
+            return Response({"message": "You are already following this user."}, status=status.HTTP_200_OK)
 
-    if request.user.following.filter(id=user_id).exists():
-        return Response({"message": "You are already following this user."}, status=status.HTTP_200_OK)
+        # Add to following list
+        request.user.following.add(user_to_follow)
+        return Response({"message": f"You are now following {user_to_follow.username}."}, status=status.HTTP_201_CREATED)
 
-    request.user.following.add(user_to_follow)
-    return Response({"message": f"You are now following {user_to_follow.username}."}, status=status.HTTP_201_CREATED)
+class UnfollowUserView(generics.GenericAPIView):
+    """
+    Allows authenticated users to unfollow other users.
+    """
+    permission_classes = [IsAuthenticated]
 
-@api_view(['POST'])
-def unfollow_user(request, user_id):
-    user_to_unfollow = get_object_or_404(CustomUser, id=user_id)
-    if not request.user.following.filter(id=user_id).exists():
-        return Response({"error": "You are not following this user."}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, user_id, *args, **kwargs):
+        # Get the user to unfollow
+        user_to_unfollow = get_object_or_404(CustomUser, id=user_id)
 
-    request.user.following.remove(user_to_unfollow)
-    return Response({"message": f"You have unfollowed {user_to_unfollow.username}."}, status=status.HTTP_200_OK)
+        # Check if the user is currently following
+        if not request.user.following.filter(id=user_id).exists():
+            return Response({"error": "You are not following this user."}, status=status.HTTP_400_BAD_REQUEST)
 
-class RegisterView(APIView):
-    def post(self, request):
-        serializer = UserSerializer(data=request.data)
+        # Remove from following list
+        request.user.following.remove(user_to_unfollow)
+        return Response({"message": f"You have unfollowed {user_to_unfollow.username}."}, status=status.HTTP_200_OK)
+
+class RegisterView(generics.GenericAPIView):
+    """
+    Allows users to register an account.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key}, status=status.HTTP_201_CREATED)
+            return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST'])
-def login(request):
-    if request.method == 'POST':
-        username = request.data.get('username')
-        password = request.data.get('password')
-        user = authenticate(username=username, password=password)
-        if user:
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key})
-        return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+class UserProfileView(generics.GenericAPIView):
+    """
+    Allows authenticated users to view and update their profiles.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        # Get the current authenticated user
+        user = request.user
+        # Serialize the user data
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        user = request.user
+        data = request.data.copy()
+
+        # Prevent modification of followers directly
+        data.pop('followers', None)
+        
+        serializer = UserSerializer(user, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LoginView(generics.GenericAPIView):
+    """
+    Allows users to log in and obtain a token.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
+            user = authenticate(username=username, password=password)
+            if user:
+                token, created = Token.objects.get_or_create(user=user)
+                return Response({"token": token.key})
+            return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

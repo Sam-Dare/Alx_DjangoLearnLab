@@ -1,28 +1,23 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, permissions, filters, status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from notifications.models import Notification
 from .models import Post, Comment, Like
 from .serializers import PostSerializer, CommentSerializer
+from rest_framework import generics  # Correctly importing generics
 
-
-# @api_view(['POST'])
-# def like_post(request, post_id):
-#     post = Post.objects.get(id=post_id)
-#     Like.objects.create(post=post, user=request.user)
-#     return Response({'status': 'liked'}, status=200)
-
-# @api_view(['POST'])
-# def unlike_post(request, post_id):
-#     post = Post.objects.get(id=post_id)
-#     like = Like.objects.get(post=post, user=request.user)
-#     like.delete()
-#     return Response({'status': 'unliked'}, status=200)
+# Custom permission to ensure only the author can edit or delete their post/comment
+class IsAuthor(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        # Only allow editing/deleting if the user is the author
+        return obj.author == request.user
 
 @api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
 def like_post(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
+    # Using generics.get_object_or_404 to fetch the post
+    post = generics.get_object_or_404(Post, id=post_id)
     like, created = Like.objects.get_or_create(user=request.user, post=post)
 
     if created:
@@ -37,8 +32,10 @@ def like_post(request, post_id):
     return Response({"message": "Post already liked"}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
 def unlike_post(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
+    # Using generics.get_object_or_404 to fetch the post
+    post = generics.get_object_or_404(Post, id=post_id)
     like = Like.objects.filter(user=request.user, post=post).first()
 
     if like:
@@ -60,14 +57,17 @@ class PostViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at']
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
-class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [IsAuthor()]
+        return super().get_permissions()
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    # Use generics.get_object_or_404 here to retrieve the Post object by pk
+    def get_object(self):
+        # Using generics.get_object_or_404 to get the post object
+        obj = generics.get_object_or_404(Post, pk=self.kwargs['pk'])
+        self.check_object_permissions(self.request, obj)
+        return obj
