@@ -15,13 +15,11 @@ class IsAuthor(permissions.BasePermission):
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
-def like_post(request, post_id):
-    # Using generics.get_object_or_404 to fetch the post
-    post = generics.get_object_or_404(Post, pk=post_id)
+def like_post(request, pk):
+    post = generics.get_object_or_404(Post, pk=pk)
     like, created = Like.objects.get_or_create(user=request.user, post=post)
 
     if created:
-        # Create a notification
         Notification.objects.create(
             recipient=post.author,
             actor=request.user,
@@ -31,11 +29,12 @@ def like_post(request, post_id):
         return Response({"message": "Post liked"}, status=status.HTTP_201_CREATED)
     return Response({"message": "Post already liked"}, status=status.HTTP_200_OK)
 
+
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
-def unlike_post(request, post_id):
+def unlike_post(request, pk):
     # Using generics.get_object_or_404 to fetch the post
-    post = generics.get_object_or_404(Post, pk=post_id)
+    post = generics.get_object_or_404(Post, pk=pk)
     like = Like.objects.filter(user=request.user, post=post).first()
 
     if like:
