@@ -17,7 +17,7 @@ class IsAuthor(permissions.BasePermission):
 @permission_classes([permissions.IsAuthenticated])
 def like_post(request, post_id):
     # Using generics.get_object_or_404 to fetch the post
-    post = generics.get_object_or_404(Post, id=post_id)
+    post = generics.get_object_or_404(Post, pk=post_id)
     like, created = Like.objects.get_or_create(user=request.user, post=post)
 
     if created:
@@ -35,7 +35,7 @@ def like_post(request, post_id):
 @permission_classes([permissions.IsAuthenticated])
 def unlike_post(request, post_id):
     # Using generics.get_object_or_404 to fetch the post
-    post = generics.get_object_or_404(Post, id=post_id)
+    post = generics.get_object_or_404(Post, pk=post_id)
     like = Like.objects.filter(user=request.user, post=post).first()
 
     if like:
@@ -71,3 +71,17 @@ class PostViewSet(viewsets.ModelViewSet):
         obj = generics.get_object_or_404(Post, pk=self.kwargs['pk'])
         self.check_object_permissions(self.request, obj)
         return obj
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        # Automatically set the author of the comment to the currently authenticated user
+        serializer.save(author=self.request.user)
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [IsAuthor()]
+        return super().get_permissions()

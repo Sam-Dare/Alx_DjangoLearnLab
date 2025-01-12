@@ -6,17 +6,16 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .models import CustomUser
 from .serializers import UserSerializer, UserRegistrationSerializer, UserLoginSerializer
-from rest_framework.permissions import IsAuthenticated
 
 class FollowUserView(generics.GenericAPIView):
     """
     Allows authenticated users to follow other users.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, user_id, *args, **kwargs):
         # Get the user to follow
-        user_to_follow = get_object_or_404(CustomUser, id=user_id)
+        user_to_follow = get_object_or_404(CustomUser.objects.all(), id=user_id)
         
         # Prevent following oneself
         if user_to_follow == request.user:
@@ -34,11 +33,11 @@ class UnfollowUserView(generics.GenericAPIView):
     """
     Allows authenticated users to unfollow other users.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, user_id, *args, **kwargs):
         # Get the user to unfollow
-        user_to_unfollow = get_object_or_404(CustomUser, id=user_id)
+        user_to_unfollow = get_object_or_404(CustomUser.objects.all(), id=user_id)
 
         # Check if the user is currently following
         if not request.user.following.filter(id=user_id).exists():
@@ -53,19 +52,21 @@ class RegisterView(generics.GenericAPIView):
     Allows users to register an account.
     """
     permission_classes = [permissions.AllowAny]
+    serializer_class = UserRegistrationSerializer  # Explicitly set the serializer class
 
     def post(self, request, *args, **kwargs):
-        serializer = UserRegistrationSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)  # Use self.get_serializer
         if serializer.is_valid():
             user = serializer.save()
             return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class UserProfileView(generics.GenericAPIView):
     """
     Allows authenticated users to view and update their profiles.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         # Get the current authenticated user
@@ -92,9 +93,10 @@ class LoginView(generics.GenericAPIView):
     Allows users to log in and obtain a token.
     """
     permission_classes = [permissions.AllowAny]
+    serializer_class = UserLoginSerializer  # Explicitly set the serializer class here
 
     def post(self, request, *args, **kwargs):
-        serializer = UserLoginSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)  # Uses UserLoginSerializer
         if serializer.is_valid():
             username = serializer.validated_data['username']
             password = serializer.validated_data['password']
