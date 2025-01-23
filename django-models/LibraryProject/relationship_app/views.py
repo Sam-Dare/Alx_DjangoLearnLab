@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.views.generic.detail import DetailView
-from relationship_app.models import Book, Library, UserProfile
-from relationship_app.forms import BookForm  # Assuming you have a form for handling Book objects
+from .models import Book, Library, UserProfile
+from .forms import BookForm  # Assuming you have a form for handling Book objects
 
 
 # Function-based view to list all books
@@ -15,7 +15,7 @@ def list_books(request):
 
 
 # Function-based view to add a book (restricted to librarians or admins)
-@user_passes_test(lambda u: is_librarian(u) or is_admin(u))
+@permission_required('relationship_app.can_add_book', raise_exception=True)  # Check for 'can_add_book' permission
 def add_book(request):
     if request.method == 'POST':
         form = BookForm(request.POST)
@@ -27,8 +27,8 @@ def add_book(request):
     return render(request, 'relationship_app/add_book.html', {'form': form})
 
 
-# Function-based view to edit a book
-@user_passes_test(lambda u: is_librarian(u) or is_admin(u))
+# Function-based view to edit a book (restricted to librarians or admins)
+@permission_required('relationship_app.can_change_book', raise_exception=True)  # Check for 'can_change_book' permission
 def edit_book(request, pk):
     book = get_object_or_404(Book, pk=pk)
     if request.method == 'POST':
@@ -41,14 +41,15 @@ def edit_book(request, pk):
     return render(request, 'relationship_app/edit_book.html', {'form': form, 'book': book})
 
 
-# Function-based view to delete a book
-@user_passes_test(lambda u: is_librarian(u) or is_admin(u))
+# Function-based view to delete a book (restricted to librarians or admins)
+@permission_required('relationship_app.can_delete_book', raise_exception=True)  # Check for 'can_delete_book' permission
 def delete_book(request, pk):
     book = get_object_or_404(Book, pk=pk)
     if request.method == 'POST':
         book.delete()
         return redirect('list_books')
     return render(request, 'relationship_app/delete_book.html', {'book': book})
+
 
 
 # Class-based view to display library details
