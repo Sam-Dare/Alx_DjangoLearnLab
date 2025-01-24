@@ -143,3 +143,12 @@ SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevents MIME type sniffing by browsers
 # Secure cookies settings
 CSRF_COOKIE_SECURE = True  # Ensures CSRF cookies are sent only over HTTPS
 SESSION_COOKIE_SECURE = True  # Ensures session cookies are sent only over HTTPS
+
+# Enable SSL Redirect
+SECURE_SSL_REDIRECT = True  # Redirect all HTTP traffic to HTTPS
+
+# HTTP Strict Transport Security (HSTS)
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Apply HSTS policy to all subdomains
+SECURE_HSTS_PRELOAD = True  # Allow preloading of HSTS by browsers
+
