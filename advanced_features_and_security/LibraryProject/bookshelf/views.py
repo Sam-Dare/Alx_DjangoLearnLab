@@ -1,16 +1,21 @@
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Book
-from .forms import BookForm
+from .forms import ExampleForm
 
-def book_form_view(request):
+
+def example_form_view(request):
     if request.method == 'POST':
-        form = BookForm(request.POST)
+        form = ExampleForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('book-list')  # Replace 'book-list' with your book list URL name
+            # Process the form data
+            name = form.cleaned_data['name']
+            email = form.cleaned_data['email']
+            message = form.cleaned_data['message']
+            # You can save this data or send an email, etc.
+            return render(request, 'bookshelf/form_success.html', {'name': name})
     else:
-        form = BookForm()
+        form = ExampleForm()
 
     return render(request, 'bookshelf/form_example.html', {'form': form})
 
