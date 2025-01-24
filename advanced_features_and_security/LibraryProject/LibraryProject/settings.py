@@ -134,3 +134,12 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 AUTH_USER_MODEL = 'bookshelf.CustomUser'
+
+# Browser-side security protections
+SECURE_BROWSER_XSS_FILTER = True  # Enables the XSS filter in supported browsers
+X_FRAME_OPTIONS = 'DENY'  # Prevents clickjacking by disallowing the app in iframes
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevents MIME type sniffing by browsers
+
+# Secure cookies settings
+CSRF_COOKIE_SECURE = True  # Ensures CSRF cookies are sent only over HTTPS
+SESSION_COOKIE_SECURE = True  # Ensures session cookies are sent only over HTTPS
