@@ -152,3 +152,5 @@ SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Apply HSTS policy to all subdomains
 SECURE_HSTS_PRELOAD = True  # Allow preloading of HSTS by browsers
 
+# Inform Django about the proxy server and how to determine if the request is secure
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
