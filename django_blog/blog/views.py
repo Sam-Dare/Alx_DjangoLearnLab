@@ -216,7 +216,7 @@ class SearchPostsView(ListView):
         ).distinct()
 
 
-class TaggedPostsView(ListView):
+class PostByTagListView(ListView):
     model = Post
     template_name = 'blog/tagged_posts.html'
     context_object_name = 'posts'
